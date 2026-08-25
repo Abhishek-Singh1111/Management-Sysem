@@ -10,7 +10,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Import database connection
 const pool = require('./config/database');
@@ -66,8 +66,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Logging middleware
-app.use(morgan('combined'));
+// Request logging: method, endpoint, status, and response time.
+app.use(morgan('dev'));
 
 // Compression middleware
 app.use(compression());
@@ -144,8 +144,7 @@ app.get('/health/detailed', async (req, res) => {
             database: {
                 connected: true,
                 version: dbVersion.rows[0].version,
-                host: process.env.DB_HOST || 'localhost',
-                database: process.env.DB_NAME || 'partymanager'
+                connection: 'configured DATABASE_URL'
             },
             timestamp: new Date().toISOString()
         });
