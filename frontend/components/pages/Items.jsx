@@ -15,7 +15,7 @@ import { jsPDF } from 'jspdf';
 import ItemForm from '../Items/ItemForm';
 import ItemList from '../Items/ItemList';
 import { getItems, createItem, updateItem, deleteItem } from '../../services/api';
-import { getFinanceData } from '../../services/financeStorage';
+import { getFinanceData, subscribeToFinanceData } from '../../services/financeStorage';
 import { useAuth } from '../../context/AuthContext';
 
 const Items = () => {
@@ -27,6 +27,12 @@ const Items = () => {
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+    const [budget, setBudget] = useState(() => getFinanceData(userId).budget);
+
+    useEffect(() => {
+        setBudget(getFinanceData(userId).budget);
+        return subscribeToFinanceData(() => setBudget(getFinanceData(userId).budget));
+    }, [userId]);
 
     const fetchItems = async () => {
         setLoading(true);
@@ -227,6 +233,7 @@ const Items = () => {
                     items={items}
                     loading={loading}
                     error={error}
+                    budget={budget}
                     onEdit={handleEdit}
                     onDelete={handleDeleteItem}
                     onTogglePurchase={handleTogglePurchase}

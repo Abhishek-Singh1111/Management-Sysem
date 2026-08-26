@@ -20,7 +20,11 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Tooltip
+    Tooltip,
+    MenuItem,
+    FormControl,
+    InputLabel,
+    Select
 } from '@mui/material';
 import {
     Edit as EditIcon,
@@ -29,7 +33,7 @@ import {
     CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 
-const ItemList = ({ items, loading, error, onEdit, onDelete, onTogglePurchase }) => {
+const ItemList = ({ items, loading, error, budget, onEdit, onDelete, onTogglePurchase }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -44,6 +48,9 @@ const ItemList = ({ items, loading, error, onEdit, onDelete, onTogglePurchase })
         const matchesCategory = !filterCategory || item.category === filterCategory;
         return matchesSearch && matchesCategory;
     });
+    const filteredTotal = filteredItems.reduce((sum, item) => sum + Number(item.total_price || 0), 0);
+    const totalItemValue = items.reduce((sum, item) => sum + Number(item.total_price || 0), 0);
+    const budgetLeft = Number(budget || 0) - totalItemValue;
 
     const handleDeleteClick = (item) => {
         setSelectedItem(item);
@@ -77,7 +84,7 @@ const ItemList = ({ items, loading, error, onEdit, onDelete, onTogglePurchase })
     return (
         <>
             {/* Filters */}
-            <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
                 <TextField
                     label="Search Items"
                     variant="outlined"
@@ -86,34 +93,42 @@ const ItemList = ({ items, loading, error, onEdit, onDelete, onTogglePurchase })
                     onChange={(e) => setSearchTerm(e.target.value)}
                     sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 200 } }}
                 />
-                <TextField
-                    select
-                    label="Category"
-                    variant="outlined"
-                    size="small"
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    sx={{ minWidth: { xs: '100%', sm: 150 } }}
-                    SelectProps={{ native: true }}
-                >
-                    <option value="">All Categories</option>
-                    {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                </TextField>
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+                    <InputLabel id="category-filter-label">Category</InputLabel>
+                    <Select
+                        labelId="category-filter-label"
+                        value={filterCategory}
+                        label="Category"
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                    >
+                        <MenuItem value="">All Categories</MenuItem>
+                        {categories.map(cat => (
+                            <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </Box>
 
             {/* Summary Stats */}
-            <Box sx={{ mb: 3, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                <Typography variant="body2" color="text.secondary">
-                    Total Items: {filteredItems.length}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Total Value: ₹{filteredItems.reduce((sum, item) => sum + parseFloat(item.total_price || 0), 0).toFixed(2)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Purchased: {filteredItems.filter(item => item.purchased).length}
-                </Typography>
+            <Box sx={{ mb: 3, display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
+                <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Total Items</Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>{filteredItems.length}</Typography>
+                </Paper>
+                <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Total Value</Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>₹{filteredTotal.toFixed(2)}</Typography>
+                </Paper>
+                <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Purchased</Typography>
+                    <Typography variant="h6" sx={{ mt: 0.5 }}>{filteredItems.filter(item => item.purchased).length}</Typography>
+                </Paper>
+                <Paper variant="outlined" sx={{ p: 2, minWidth: 0 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Budget Left</Typography>
+                    <Typography variant="h6" color={budgetLeft < 0 ? 'error.main' : 'success.main'} sx={{ mt: 0.5 }}>
+                        ₹{budgetLeft.toFixed(2)}
+                    </Typography>
+                </Paper>
             </Box>
 
             {/* Items Table */}
