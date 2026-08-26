@@ -4,7 +4,6 @@ import { Box, Button, Paper, TextField, Typography } from '@mui/material';
 const ItemForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 	const [formData, setFormData] = useState({
 		name: initialData?.name || '',
-		description: initialData?.description || '',
 		unit_price: initialData?.unit_price || '',
 		quantity: initialData?.quantity || 1,
 		category: initialData?.category || '',
@@ -30,7 +29,6 @@ const ItemForm = ({ initialData, onSubmit, onCancel, isLoading }) => {
 				{initialData ? 'Edit item' : 'Add item'}
 			</Typography>
 			<TextField fullWidth required name="name" label="Item name" value={formData.name} onChange={handleChange} sx={{ mb: 2 }} />
-			<TextField fullWidth name="description" label="Description" value={formData.description} onChange={handleChange} multiline minRows={2} sx={{ mb: 2 }} />
 			<TextField fullWidth required name="unit_price" label="Unit price" type="number" inputProps={{ min: 0, step: 0.01 }} value={formData.unit_price} onChange={handleChange} sx={{ mb: 2 }} />
 			<TextField fullWidth required name="quantity" label="Quantity" type="number" inputProps={{ min: 1, step: 1 }} value={formData.quantity} onChange={handleChange} sx={{ mb: 2 }} />
 			<TextField fullWidth name="category" label="Category" value={formData.category} onChange={handleChange} sx={{ mb: 3 }} />
