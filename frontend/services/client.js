@@ -5,7 +5,7 @@ import axios from 'axios';
 const getBaseUrl = () => {
     if (import.meta.env.PROD) {
         // Production URL - change this to your actual production backend URL
-        return import.meta.env.VITE_API_URL || 'https://api.yourdomain.com/api';
+        return import.meta.env.VITE_API_URL || 'https://management-sysem.onrender.com/api';
     }
     // Development URL
     return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';

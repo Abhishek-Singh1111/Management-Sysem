@@ -61,8 +61,19 @@ app.use(helmet({
 }));
 
 // CORS configuration
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    'https://management-sysem.vercel.app',
+    'http://localhost:5173',
+].filter(Boolean);
+
 const corsOptions = {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Origin is not allowed by CORS'));
+    },
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
