@@ -1,4 +1,3 @@
-// services/api.js
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:5000/api';
@@ -17,7 +16,6 @@ export const createItem = (data) => api.post('/items', data);
 export const updateItem = (id, data) => api.put(`/items/${id}`, data);
 export const deleteItem = (id) => api.delete(`/items/${id}`);
 export const getItemSummary = () => api.get('/items/summary');
-
 
 // Auth API calls
 export const register = (userData) => api.post('/auth/register', userData);

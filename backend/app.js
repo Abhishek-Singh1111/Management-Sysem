@@ -9,6 +9,11 @@ const dotenv = require('dotenv');
 const path = require('path');
 const fs = require('fs');
 
+const studentFundRoutes = require('./routes/studentFund.routes');
+const departmentRoutes = require('./routes/department.routes');
+const branchRoutes = require('./routes/branch.routes');
+const semesterRoutes = require('./routes/semester.routes');
+
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -36,10 +41,10 @@ if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true });
 }
 
-// Rate limiting configuration
-const limiter = rateLimit({
+// Rate-limit authentication endpoints where brute-force protection is needed.
+const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 30, // Limit each IP to 30 authentication requests per windowMs
     message: {
         success: false,
         message: 'Too many requests from this IP, please try again later.'
@@ -79,8 +84,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Apply rate limiting to all API routes
-app.use('/api', limiter);
+// Routine authenticated API requests are not globally rate limited so that
+// filtering, pagination, and student updates are not blocked by page usage.
+app.use('/api/auth', authLimiter);
 
 // ============================================
 // DATABASE CONNECTION MIDDLEWARE
@@ -223,6 +229,11 @@ app.use('/api/auth', authRoutes);
 
 // Protected routes (require authentication)
 app.use('/api/items', itemRoutes);
+
+app.use('/api/student-funds', studentFundRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/branches', branchRoutes);
+app.use('/api/semesters', semesterRoutes);
 
 // ============================================
 // 404 HANDLER

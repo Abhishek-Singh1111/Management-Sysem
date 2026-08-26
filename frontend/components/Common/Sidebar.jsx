@@ -14,6 +14,7 @@ import {
 import {
     Dashboard as DashboardIcon,
     Inventory as InventoryIcon,
+    People as StudentsIcon,
     // MoneyOff as ExpensesIcon,
     AccountBalanceWallet as BudgetIcon,
     // Assessment as ReportsIcon,
@@ -31,6 +32,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
     const menuItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
         { text: 'Items', icon: <InventoryIcon />, path: '/items' },
+        { text: 'Students', icon: <StudentsIcon />, path: '/students' },
         // { text: 'Expenses', icon: <ExpensesIcon />, path: '/expenses' },
         { text: 'Budget', icon: <BudgetIcon />, path: '/budget' },
         // { text: 'Reports', icon: <ReportsIcon />, path: '/reports' },

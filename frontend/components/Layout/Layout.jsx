@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { Box } from '@mui/material';
 import Navbar from '../Common/Navbar';
 import Sidebar from '../Common/Sidebar';
+import NotificationHost from '../../hooks/NotificationHost';
 
 const drawerWidth = 240;
 
@@ -40,6 +41,7 @@ const Layout = () => {
             >
                 <Outlet />
             </Box>
+            <NotificationHost />
         </Box>
     );
 };

@@ -30,7 +30,6 @@ const Items = () => {
     const [budget, setBudget] = useState(() => getFinanceData(userId).budget);
 
     useEffect(() => {
-        setBudget(getFinanceData(userId).budget);
         return subscribeToFinanceData(() => setBudget(getFinanceData(userId).budget));
     }, [userId]);
 

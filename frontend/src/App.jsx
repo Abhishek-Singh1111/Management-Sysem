@@ -18,6 +18,7 @@ import ResetPassword from '../components/Auth/ResetPassword';
 // Main Pages
 import Dashboard from '../components/pages/Dashboard';
 import Items from '../components/pages/Items';
+import Students from '../components/pages/Students';
 import Expenses from '../components/pages/Expenses';
 import Budget from '../components/pages/Budget';
 import Reports from '../components/pages/Reports';
@@ -63,6 +64,7 @@ function App() {
                             <Route path="/" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/items" element={<Items />} />
+                            <Route path="/students" element={<Students />} />
                             <Route path="/expenses" element={<Expenses />} />
                             <Route path="/budget" element={<Budget />} />
                             <Route path="/reports" element={<Reports />} />
