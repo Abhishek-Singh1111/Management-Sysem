@@ -61,9 +61,26 @@ const Dashboard = () => {
                     ]);
                     
                     if (active) {
-                        setStudentSummary(summary.data.data);
-                        setSemesterSummary(semester.data.data || []);
-                        setDepartmentSummary(department.data.data || []);
+                        const summaryData = summary.data.data;
+                        setStudentSummary(summaryData ? {
+                            ...summaryData,
+                            total_students: Number(summaryData.total_students || 0),
+                            total_fund_required: Number(summaryData.total_fund_required || 0),
+                            total_fund_collected: Number(summaryData.total_fund_collected || 0),
+                            total_fund_pending: Number(summaryData.total_fund_pending || 0),
+                            paid_students: Number(summaryData.paid_students || 0),
+                            pending_students: Number(summaryData.pending_students || 0),
+                        } : null);
+                        setSemesterSummary((semester.data.data || []).map(item => ({
+                            ...item,
+                            total_fund_collected: Number(item.total_fund_collected || 0),
+                            total_fund_pending: Number(item.total_fund_pending || 0),
+                        })));
+                        setDepartmentSummary((department.data.data || []).map(item => ({
+                            ...item,
+                            total_fund_collected: Number(item.total_fund_collected || 0),
+                            total_fund_pending: Number(item.total_fund_pending || 0),
+                        })));
                     }
                 } catch (studentError) {
                     console.error('Error loading student fund data:', studentError);

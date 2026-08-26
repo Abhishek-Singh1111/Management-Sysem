@@ -7,6 +7,11 @@ class StudentFundModel {
         let query = `
             SELECT 
                 sf.*,
+                CASE
+                    WHEN sf.fund_amount > 0 AND sf.paid_amount >= sf.fund_amount THEN 'paid'
+                    WHEN sf.paid_amount > 0 THEN 'partial'
+                    ELSE 'pending'
+                END AS payment_status,
                 COUNT(*) OVER() AS total_count,
                 s.semester_number,
                 s.name as semester_name,
@@ -45,7 +50,11 @@ class StudentFundModel {
         }
 
         if (filters.payment_status) {
-            query += ` AND sf.payment_status = $${paramCount}`;
+            query += ` AND CASE
+                WHEN sf.fund_amount > 0 AND sf.paid_amount >= sf.fund_amount THEN 'paid'
+                WHEN sf.paid_amount > 0 THEN 'partial'
+                ELSE 'pending'
+            END = $${paramCount}`;
             values.push(filters.payment_status);
             paramCount++;
         }
@@ -56,7 +65,7 @@ class StudentFundModel {
             paramCount++;
         }
 
-        query += ` ORDER BY sf.created_at DESC`;
+        query += ` ORDER BY LOWER(sf.student_name) ASC, sf.student_id ASC`;
 
         const hasPagination = filters.page !== undefined || filters.limit !== undefined;
         if (hasPagination) {
@@ -79,6 +88,11 @@ class StudentFundModel {
         const query = `
             SELECT 
                 sf.*,
+                CASE
+                    WHEN sf.fund_amount > 0 AND sf.paid_amount >= sf.fund_amount THEN 'paid'
+                    WHEN sf.paid_amount > 0 THEN 'partial'
+                    ELSE 'pending'
+                END AS payment_status,
                 s.semester_number,
                 s.name as semester_name,
                 d.name as department_name,
@@ -102,6 +116,11 @@ class StudentFundModel {
         const query = `
             SELECT 
                 sf.*,
+                CASE
+                    WHEN sf.fund_amount > 0 AND sf.paid_amount >= sf.fund_amount THEN 'paid'
+                    WHEN sf.paid_amount > 0 THEN 'partial'
+                    ELSE 'pending'
+                END AS payment_status,
                 s.semester_number,
                 s.name as semester_name,
                 d.name as department_name,
@@ -289,9 +308,9 @@ class StudentFundModel {
                 SUM(fund_amount) as total_fund_required,
                 SUM(paid_amount) as total_fund_collected,
                 SUM(fund_amount - paid_amount) as total_fund_pending,
-                COUNT(CASE WHEN payment_status = 'paid' THEN 1 END) as paid_students,
-                COUNT(CASE WHEN payment_status = 'pending' THEN 1 END) as pending_students,
-                COUNT(CASE WHEN payment_status = 'partial' THEN 1 END) as partial_students,
+                COUNT(CASE WHEN fund_amount > 0 AND paid_amount >= fund_amount THEN 1 END) as paid_students,
+                COUNT(CASE WHEN paid_amount <= 0 THEN 1 END) as pending_students,
+                COUNT(CASE WHEN paid_amount > 0 AND paid_amount < fund_amount THEN 1 END) as partial_students,
                 AVG(paid_amount) as average_paid,
                 AVG(fund_amount) as average_fund
             FROM student_funds
@@ -333,8 +352,8 @@ class StudentFundModel {
                 SUM(sf.fund_amount) as total_fund_required,
                 SUM(sf.paid_amount) as total_fund_collected,
                 SUM(sf.fund_amount - sf.paid_amount) as total_fund_pending,
-                COUNT(CASE WHEN sf.payment_status = 'paid' THEN 1 END) as paid_students,
-                COUNT(CASE WHEN sf.payment_status = 'pending' THEN 1 END) as pending_students
+                COUNT(CASE WHEN sf.fund_amount > 0 AND sf.paid_amount >= sf.fund_amount THEN 1 END) as paid_students,
+                COUNT(CASE WHEN sf.paid_amount <= 0 THEN 1 END) as pending_students
             FROM student_funds sf
             LEFT JOIN semesters s ON sf.semester_id = s.id
             GROUP BY s.semester_number, s.name

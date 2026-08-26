@@ -108,7 +108,7 @@ class StudentFundController {
             // Set default payment status based on paid amount
             const paid_amount = parseFloat(req.body.paid_amount) || 0;
             let payment_status = 'pending';
-            if (paid_amount >= fund_amount) {
+            if (fund_amount > 0 && paid_amount >= fund_amount) {
                 payment_status = 'paid';
             } else if (paid_amount > 0) {
                 payment_status = 'partial';
@@ -147,7 +147,40 @@ class StudentFundController {
                 });
             }
 
-            const updatedFund = await StudentFundModel.updateStudentFund(req.params.id, req.body);
+            const fundAmount = req.body.fund_amount === undefined
+                ? Number(existing.fund_amount)
+                : Number(req.body.fund_amount);
+            const paidAmount = req.body.paid_amount === undefined
+                ? Number(existing.paid_amount)
+                : Number(req.body.paid_amount);
+
+            if (!Number.isFinite(fundAmount) || fundAmount <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Fund amount must be greater than 0'
+                });
+            }
+
+            if (!Number.isFinite(paidAmount) || paidAmount < 0 || paidAmount > fundAmount) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Paid amount must be between 0 and the fund amount'
+                });
+            }
+
+            let payment_status = 'pending';
+            if (fundAmount > 0 && paidAmount >= fundAmount) {
+                payment_status = 'paid';
+            } else if (paidAmount > 0) {
+                payment_status = 'partial';
+            }
+
+            const updatedFund = await StudentFundModel.updateStudentFund(req.params.id, {
+                ...req.body,
+                fund_amount: fundAmount,
+                paid_amount: paidAmount,
+                payment_status
+            });
             
             res.json({
                 success: true,
@@ -173,11 +206,18 @@ class StudentFundController {
                 });
             }
 
-            const { paid_amount } = req.body;
+            const paid_amount = Number(req.body.paid_amount);
+
+            if (!Number.isFinite(paid_amount) || paid_amount < 0 || paid_amount > Number(existing.fund_amount)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Paid amount must be between 0 and the fund amount'
+                });
+            }
             
             // Auto-calculate payment status
             let payment_status = 'pending';
-            if (paid_amount >= existing.fund_amount) {
+            if (Number(existing.fund_amount) > 0 && paid_amount >= Number(existing.fund_amount)) {
                 payment_status = 'paid';
             } else if (paid_amount > 0) {
                 payment_status = 'partial';

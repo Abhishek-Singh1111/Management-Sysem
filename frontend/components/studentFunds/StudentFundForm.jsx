@@ -16,18 +16,18 @@ import { studentFundAPI, departmentAPI, branchAPI, semesterAPI } from '../../ser
 import { useNotification } from '../../hooks/useNotification';
 
 const getInitialFormData = (initialData) => ({
-    student_name: initialData?.student_name || '',
-    student_id: initialData?.student_id || '',
-    email: initialData?.email || '',
-    phone: initialData?.phone || '',
-    semester_id: initialData?.semester_id || '',
-    department_id: initialData?.department_id || '',
-    branch_id: initialData?.branch_id || '',
-    fund_amount: initialData?.fund_amount || '800',
-    paid_amount: initialData?.paid_amount || '0',
-    payment_method: initialData?.payment_method || '',
-    transaction_id: initialData?.transaction_id || '',
-    notes: initialData?.notes || '',
+    student_name: initialData?.student_name ?? '',
+    student_id: initialData?.student_id ?? '',
+    email: initialData?.email ?? '',
+    phone: initialData?.phone ?? '',
+    semester_id: initialData?.semester_id ?? '',
+    department_id: initialData?.department_id ?? '',
+    branch_id: initialData?.branch_id ?? '',
+    fund_amount: initialData?.fund_amount ?? '800',
+    paid_amount: initialData?.paid_amount ?? '0',
+    payment_method: initialData?.payment_method ?? '',
+    transaction_id: initialData?.transaction_id ?? '',
+    notes: initialData?.notes ?? '',
 });
 
 const StudentFundForm = ({ initialData, initialFilters, onSuccess, onCancel }) => {
@@ -115,6 +115,7 @@ const StudentFundForm = ({ initialData, initialFilters, onSuccess, onCancel }) =
                 ...formData,
                 fund_amount: parseFloat(formData.fund_amount),
                 paid_amount: parseFloat(formData.paid_amount) || 0,
+                payment_status: undefined,
             };
 
             if (initialData) {

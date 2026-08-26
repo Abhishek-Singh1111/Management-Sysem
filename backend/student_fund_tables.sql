@@ -57,7 +57,7 @@ CREATE TABLE student_funds (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT valid_payment_status CHECK (payment_status IN ('pending', 'partial', 'paid')),
-    CONSTRAINT valid_amount CHECK (paid_amount <= fund_amount)
+    CONSTRAINT valid_amount CHECK (paid_amount >= 0 AND paid_amount <= fund_amount)
 );
 
 -- Fund Collections (for tracking overall collection)
@@ -138,6 +138,19 @@ AFTER INSERT OR UPDATE OF fund_amount, paid_amount, semester_id, department_id, 
 ON student_funds
 FOR EACH ROW
 EXECUTE FUNCTION update_fund_collections();
+
+-- Repair statuses for records created before amount-based status validation.
+UPDATE student_funds
+SET payment_status = CASE
+    WHEN fund_amount > 0 AND paid_amount >= fund_amount THEN 'paid'
+    WHEN paid_amount > 0 THEN 'partial'
+    ELSE 'pending'
+END
+WHERE payment_status IS DISTINCT FROM CASE
+    WHEN fund_amount > 0 AND paid_amount >= fund_amount THEN 'paid'
+    WHEN paid_amount > 0 THEN 'partial'
+    ELSE 'pending'
+END;
 
 -- Insert initial data
 INSERT INTO departments (name, code, description) VALUES

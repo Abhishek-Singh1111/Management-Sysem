@@ -25,18 +25,27 @@ import {
     Tooltip,
     CircularProgress,
     Grid,
-    Pagination,
 } from '@mui/material';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
     Payment as PaymentIcon,
-    FileDownload as ExportIcon,
+    PictureAsPdf as PdfIcon,
 } from '@mui/icons-material';
 import { studentFundAPI, departmentAPI, branchAPI, semesterAPI } from '../../services/endpoints';
 import { useNotification } from '../../hooks/useNotification';
 import PaymentStatusUpdate from './PaymentStatusUpdate';
 import StudentFundForm from './StudentFundForm';
+import { jsPDF } from 'jspdf';
+
+const getPaymentStatus = (fund) => {
+    const fundAmount = Number(fund?.fund_amount || 0);
+    const paidAmount = Number(fund?.paid_amount || 0);
+
+    if (fundAmount > 0 && paidAmount >= fundAmount) return 'paid';
+    if (paidAmount > 0) return 'partial';
+    return 'pending';
+};
 
 const StudentFundList = () => {
     const [funds, setFunds] = useState([]);
@@ -56,8 +65,6 @@ const StudentFundList = () => {
     const [showPaymentDialog, setShowPaymentDialog] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
     const [summary, setSummary] = useState(null);
     const { showNotification } = useNotification();
 
@@ -67,8 +74,6 @@ const StudentFundList = () => {
             const [response, summaryResponse] = await Promise.all([
                 studentFundAPI.getAll({
                     ...filters,
-                    page,
-                    limit: 20
                 }),
                 studentFundAPI.getSummary({
                     semester_id: filters.semester_id,
@@ -77,14 +82,13 @@ const StudentFundList = () => {
                 }),
             ]);
             setFunds(response.data.data || []);
-            setTotalPages(Math.ceil((response.data.count || 0) / 20));
             setSummary(summaryResponse.data.data || null);
         } catch (error) {
             showNotification(error.message, 'error');
         } finally {
             setLoading(false);
         }
-    }, [filters, page, showNotification]);
+    }, [filters, showNotification]);
 
     const fetchFiltersData = useCallback(async () => {
         try {
@@ -122,7 +126,6 @@ const StudentFundList = () => {
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({ ...prev, [field]: value }));
-        setPage(1);
         if (field === 'department_id') {
             setFilters(prev => ({ ...prev, branch_id: '' }));
             fetchBranches(value);
@@ -140,28 +143,73 @@ const StudentFundList = () => {
         }
     };
 
-    const handleExport = async () => {
+    const handleExportPdf = async () => {
         try {
             const response = await studentFundAPI.exportData(filters);
-            const data = response.data.data;
-            const csv = convertToCSV(data);
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `student_funds_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            showNotification('Export successful', 'success');
+            const data = response.data.data || [];
+            const document = new jsPDF({ orientation: 'landscape' });
+            const date = new Date().toISOString().split('T')[0];
+            let y = 18;
+
+            document.setFontSize(16);
+            document.text('Student Fund Report', 14, y);
+            y += 9;
+            document.setFontSize(9);
+            document.text(`Semester: ${selectedSemester?.semester_number ? `Semester ${selectedSemester.semester_number}` : 'All'}`, 14, y);
+            document.text(`Department: ${selectedDepartment?.name || 'All'}`, 90, y);
+            document.text(`Branch: ${selectedBranch?.name || 'All'}`, 190, y);
+            y += 7;
+            document.text(`Students: ${summary?.total_students || data.length}`, 14, y);
+            document.text(`Total assigned: Rs. ${Number(summary?.total_fund_required || 0).toFixed(2)}`, 90, y);
+            document.text(`Collected: Rs. ${Number(summary?.total_fund_collected || 0).toFixed(2)}`, 190, y);
+            y += 10;
+
+            const columns = [
+                { label: 'Student Name', x: 14 },
+                { label: 'Student ID', x: 78 },
+                { label: 'Semester', x: 120 },
+                { label: 'Department', x: 155 },
+                { label: 'Branch', x: 205 },
+                { label: 'Amount', x: 250 },
+                { label: 'Paid', x: 275 },
+                { label: 'Status', x: 300 },
+            ];
+            const rowHeight = 7;
+
+            const drawHeader = () => {
+                document.setFillColor(25, 118, 210);
+                document.rect(10, y - 5, 282, 8, 'F');
+                document.setTextColor(255, 255, 255);
+                document.setFontSize(8);
+                columns.forEach(column => document.text(column.label, column.x, y));
+                document.setTextColor(0, 0, 0);
+                y += rowHeight;
+            };
+
+            drawHeader();
+            data.forEach((fund) => {
+                if (y > 195) {
+                    document.addPage();
+                    y = 18;
+                    drawHeader();
+                }
+                document.setFontSize(7.5);
+                document.text(String(fund.student_name || '-').slice(0, 28), 14, y);
+                document.text(String(fund.student_id || '-').slice(0, 18), 78, y);
+                document.text(String(fund.semester_name || '-').slice(0, 14), 120, y);
+                document.text(String(fund.department_name || '-').slice(0, 18), 155, y);
+                document.text(String(fund.branch_name || '-').slice(0, 16), 205, y);
+                document.text(`Rs. ${Number(fund.fund_amount || 0).toFixed(2)}`, 250, y);
+                document.text(`Rs. ${Number(fund.paid_amount || 0).toFixed(2)}`, 275, y);
+                document.text(getPaymentStatus(fund).toUpperCase(), 300, y);
+                y += rowHeight;
+            });
+
+            document.save(`student_funds_${date}.pdf`);
+            showNotification('PDF created successfully', 'success');
         } catch (error) {
             showNotification(error.message, 'error');
         }
-    };
-
-    const convertToCSV = (data) => {
-        if (!data || data.length === 0) return '';
-        const headers = Object.keys(data[0]);
-        const rows = data.map(row => headers.map(header => row[header] || '').join(','));
-        return [headers.join(','), ...rows].join('\n');
     };
 
     const getStatusColor = (status) => {
@@ -173,6 +221,19 @@ const StudentFundList = () => {
         }
     };
 
+    const sortedFunds = [...funds].sort((firstFund, secondFund) => {
+        const nameOrder = (firstFund.student_name || '').localeCompare(
+            secondFund.student_name || '',
+            undefined,
+            { sensitivity: 'base' }
+        );
+        return nameOrder || String(firstFund.student_id || '').localeCompare(String(secondFund.student_id || ''));
+    });
+
+    const selectedSemester = semesters.find(semester => String(semester.id) === String(filters.semester_id));
+    const selectedDepartment = departments.find(department => String(department.id) === String(filters.department_id));
+    const selectedBranch = branches.find(branch => String(branch.id) === String(filters.branch_id));
+
     if (loading && funds.length === 0) {
         return (
             <Box display="flex" justifyContent="center" p={4}>
@@ -183,18 +244,20 @@ const StudentFundList = () => {
 
     return (
         <Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6">Student fund records</Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: { xs: 1, sm: 2 } }}>
+                <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                    Student fund records
+                </Typography>
                 <Button variant="contained" onClick={() => setShowCreateDialog(true)}>
                     Add Student
                 </Button>
             </Box>
 
-            <Paper sx={{ p: 2, mb: 3 }}>
+            <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 2, sm: 3 } }}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                     Selected group fund summary
                 </Typography>
-                <Grid container spacing={2}>
+                <Grid container spacing={{ xs: 1, sm: 2 }}>
                     <Grid item xs={6} sm={3}>
                         <Typography variant="caption" color="text.secondary" display="block">
                             Students
@@ -231,8 +294,8 @@ const StudentFundList = () => {
             </Paper>
 
             {/* Filters */}
-            <Paper sx={{ p: 2, mb: 3 }}>
-                <Grid container spacing={2} alignItems="center">
+            <Paper sx={{ p: { xs: 1, sm: 2 }, mb: { xs: 2, sm: 3 } }}>
+                <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
                     <Grid item xs={12} sm={3}>
                         <TextField
                             fullWidth
@@ -312,31 +375,72 @@ const StudentFundList = () => {
                         </FormControl>
                     </Grid>
                     <Grid item xs={12} sm={1}>
-                        <Tooltip title="Export Data">
+                        <Tooltip title="Create PDF report">
                             <Button
                                 fullWidth
                                 variant="outlined"
-                                onClick={handleExport}
-                                startIcon={<ExportIcon />}
+                                onClick={handleExportPdf}
+                                startIcon={<PdfIcon />}
                             >
-                                Export
+                                Create PDF
                             </Button>
                         </Tooltip>
                     </Grid>
                 </Grid>
             </Paper>
 
+            <Paper sx={{ display: { xs: 'block', sm: 'none' }, p: 1.5, mb: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Selected group
+                </Typography>
+                <Grid container spacing={1}>
+                    <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                            Semester
+                        </Typography>
+                        <Typography variant="body2">
+                            {selectedSemester?.semester_number ? `Semester ${selectedSemester.semester_number}` : 'All semesters'}
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                            Department
+                        </Typography>
+                        <Typography variant="body2">
+                            {selectedDepartment?.name || 'All departments'}
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                            Branch
+                        </Typography>
+                        <Typography variant="body2">
+                            {selectedBranch?.name || 'All branches'}
+                        </Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                            Amount to be paid
+                        </Typography>
+                        <Typography variant="body2" fontWeight="bold">
+                            ₹{Number(summary?.total_fund_required || 0).toFixed(2)}
+                        </Typography>
+                    </Grid>
+                </Grid>
+            </Paper>
+
             {/* Table */}
             <TableContainer component={Paper}>
-                <Table>
+                <Table sx={{ '& .MuiTableCell-root': { px: { xs: 1, sm: 2 }, py: { xs: 1, sm: 1.5 } } }}>
                     <TableHead>
                         <TableRow>
                             <TableCell>Student Name</TableCell>
-                            <TableCell>Student ID</TableCell>
-                            <TableCell>Semester</TableCell>
-                            <TableCell>Department</TableCell>
-                            <TableCell>Branch</TableCell>
-                            <TableCell align="right">Amount</TableCell>
+                            <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Student ID</TableCell>
+                            <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Semester</TableCell>
+                            <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Department</TableCell>
+                            <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Branch</TableCell>
+                            <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Amount</TableCell>
+                            <TableCell align="right">Amount Paid</TableCell>
                             <TableCell>Status</TableCell>
                             <TableCell align="center">Actions</TableCell>
                         </TableRow>
@@ -344,14 +448,14 @@ const StudentFundList = () => {
                     <TableBody>
                         {funds.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                                     <Typography variant="body1" color="text.secondary">
                                         No student funds found
                                     </Typography>
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            funds.map((fund) => (
+                            sortedFunds.map((fund) => (
                                 <TableRow key={fund.id}>
                                     <TableCell>
                                         <Typography variant="body2" fontWeight="bold">
@@ -363,17 +467,20 @@ const StudentFundList = () => {
                                             </Typography>
                                         )}
                                     </TableCell>
-                                    <TableCell>{fund.student_id}</TableCell>
-                                    <TableCell>{fund.semester_name || '-'}</TableCell>
-                                    <TableCell>{fund.department_name || '-'}</TableCell>
-                                    <TableCell>{fund.branch_name || '-'}</TableCell>
-                                    <TableCell align="right">
+                                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{fund.student_id}</TableCell>
+                                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{fund.semester_name || '-'}</TableCell>
+                                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{fund.department_name || '-'}</TableCell>
+                                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{fund.branch_name || '-'}</TableCell>
+                                    <TableCell align="right" sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                                         ₹{parseFloat(fund.fund_amount).toFixed(2)}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ color: 'success.main' }}>
+                                        ₹{parseFloat(fund.paid_amount || 0).toFixed(2)}
                                     </TableCell>
                                     <TableCell>
                                         <Chip
-                                            label={fund.payment_status?.toUpperCase() || 'PENDING'}
-                                            color={getStatusColor(fund.payment_status)}
+                                            label={getPaymentStatus(fund).toUpperCase()}
+                                            color={getStatusColor(getPaymentStatus(fund))}
                                             size="small"
                                         />
                                     </TableCell>
@@ -421,21 +528,6 @@ const StudentFundList = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-                <Box display="flex" justifyContent="center" sx={{ mt: 3 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mr: 2, alignSelf: 'center' }}>
-                        Page {page} of {totalPages}
-                    </Typography>
-                    <Pagination
-                        count={totalPages}
-                        page={page}
-                        onChange={(e, value) => setPage(value)}
-                        color="primary"
-                    />
-                </Box>
-            )}
 
             {/* Edit Dialog */}
             <Dialog
