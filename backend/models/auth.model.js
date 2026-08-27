@@ -27,6 +27,29 @@ class AuthModel {
         return result.rows[0];
     }
 
+    // Find users without exposing password hashes
+    static async findAllUsers() {
+        const query = `
+            SELECT id, username, email, full_name, role, is_active, last_login, created_at
+            FROM users
+            ORDER BY created_at DESC
+        `;
+        const result = await pool.query(query);
+        return result.rows;
+    }
+
+    // Update a user's application role
+    static async updateRole(userId, role) {
+        const query = `
+            UPDATE users
+            SET role = $1, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+            RETURNING id, username, email, full_name, role, is_active, last_login, created_at
+        `;
+        const result = await pool.query(query, [role, userId]);
+        return result.rows[0];
+    }
+
     // Create new user
     static async createUser(userData) {
         const { username, email, password, full_name, role = 'member' } = userData;

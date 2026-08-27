@@ -2,7 +2,7 @@
 import {
     Drawer,
     List,
-    ListItem,
+    ListItemButton,
     ListItemIcon,
     ListItemText,
     Toolbar,
@@ -42,7 +42,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
     ];
 
     // Admin only menu items
-    if (user?.role === 'admin') {
+    if (user?.role === 'super_admin') {
         menuItems.push({ 
             text: 'Users', 
             icon: <UsersIcon />, 
@@ -84,8 +84,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
                         (item.path !== '/' && location.pathname.startsWith(item.path));
                     
                     return (
-                        <ListItem
-                            button
+                        <ListItemButton
                             key={item.text}
                             onClick={() => navigate(item.path)}
                             selected={isActive}
@@ -117,7 +116,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
                                 {item.icon}
                             </ListItemIcon>
                             <ListItemText primary={item.text} />
-                        </ListItem>
+                        </ListItemButton>
                     );
                 })}
             </List>

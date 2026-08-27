@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const StudentFundController = require('../controllers/studentFund.controller');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 // All routes require authentication
 router.use(authenticateToken);
@@ -20,12 +20,12 @@ router.get('/', StudentFundController.getAllStudentFunds);
 router.get('/student/:studentId', StudentFundController.getStudentFundByStudentId);
 router.get('/:id', StudentFundController.getStudentFundById);
 
-router.post('/', StudentFundController.createStudentFund);
-router.post('/bulk-import', StudentFundController.bulkImportStudents);
+router.post('/', authorizeRoles('admin'), StudentFundController.createStudentFund);
+router.post('/bulk-import', authorizeRoles('admin'), StudentFundController.bulkImportStudents);
 
-router.put('/:id', StudentFundController.updateStudentFund);
-router.put('/:id/payment', StudentFundController.updatePaymentStatus);
+router.put('/:id', authorizeRoles('admin'), StudentFundController.updateStudentFund);
+router.put('/:id/payment', authorizeRoles('admin'), StudentFundController.updatePaymentStatus);
 
-router.delete('/:id', StudentFundController.deleteStudentFund);
+router.delete('/:id', authorizeRoles('admin'), StudentFundController.deleteStudentFund);
 
 module.exports = router;

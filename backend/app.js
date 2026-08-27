@@ -95,9 +95,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routine authenticated API requests are not globally rate limited so that
-// filtering, pagination, and student updates are not blocked by page usage.
-app.use('/api/auth', authLimiter);
+// Limit credential and token endpoints without blocking routine authenticated requests.
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/refresh-token', authLimiter);
 
 // ============================================
 // DATABASE CONNECTION MIDDLEWARE

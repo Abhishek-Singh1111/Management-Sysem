@@ -33,7 +33,7 @@ import {
     CheckCircle as CheckCircleIcon
 } from '@mui/icons-material';
 
-const ItemList = ({ items, loading, error, budget, onEdit, onDelete, onTogglePurchase }) => {
+const ItemList = ({ items, loading, error, budget, isAdmin, onEdit, onDelete, onTogglePurchase }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -191,25 +191,29 @@ const ItemList = ({ items, loading, error, budget, onEdit, onDelete, onTogglePur
                                         )}
                                     </TableCell>
                                     <TableCell align="center">
-                                        <Tooltip title="Toggle Purchase Status">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => handleTogglePurchase(item)}
-                                                color={item.purchased ? 'success' : 'default'}
-                                            >
-                                                {item.purchased ? <CheckCircleIcon /> : <ShoppingCartIcon />}
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Edit">
-                                            <IconButton size="small" onClick={() => onEdit(item)} color="primary">
-                                                <EditIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Delete">
-                                            <IconButton size="small" onClick={() => handleDeleteClick(item)} color="error">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {isAdmin && (
+                                            <>
+                                                <Tooltip title="Toggle Purchase Status">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleTogglePurchase(item)}
+                                                        color={item.purchased ? 'success' : 'default'}
+                                                    >
+                                                        {item.purchased ? <CheckCircleIcon /> : <ShoppingCartIcon />}
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Edit">
+                                                    <IconButton size="small" onClick={() => onEdit(item)} color="primary">
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete">
+                                                    <IconButton size="small" onClick={() => handleDeleteClick(item)} color="error">
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

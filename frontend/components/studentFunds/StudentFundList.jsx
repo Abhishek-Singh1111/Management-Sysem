@@ -37,6 +37,7 @@ import { useNotification } from '../../hooks/useNotification';
 import PaymentStatusUpdate from './PaymentStatusUpdate';
 import StudentFundForm from './StudentFundForm';
 import { jsPDF } from 'jspdf';
+import { useAuth } from '../../context/AuthContext';
 
 const getPaymentStatus = (fund) => {
     const fundAmount = Number(fund?.fund_amount || 0);
@@ -67,6 +68,7 @@ const StudentFundList = () => {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [summary, setSummary] = useState(null);
     const { showNotification } = useNotification();
+    const { isAdmin } = useAuth();
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -248,9 +250,11 @@ const StudentFundList = () => {
                 <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                     Student fund records
                 </Typography>
-                <Button variant="contained" onClick={() => setShowCreateDialog(true)}>
-                    Add Student
-                </Button>
+                {isAdmin && (
+                    <Button variant="contained" onClick={() => setShowCreateDialog(true)}>
+                        Add Student
+                    </Button>
+                )}
             </Box>
 
             <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: { xs: 2, sm: 3 } }}>
@@ -485,42 +489,46 @@ const StudentFundList = () => {
                                         />
                                     </TableCell>
                                     <TableCell align="center">
-                                        <Tooltip title="Update Payment">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => {
-                                                    setSelectedFund(fund);
-                                                    setShowPaymentDialog(true);
-                                                }}
-                                                color="primary"
-                                            >
-                                                <PaymentIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Edit">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => {
-                                                    setSelectedFund(fund);
-                                                    setShowEditDialog(true);
-                                                }}
-                                                color="info"
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title="Delete">
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => {
-                                                    setSelectedFund(fund);
-                                                    setShowDeleteDialog(true);
-                                                }}
-                                                color="error"
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </Tooltip>
+                                        {isAdmin && (
+                                            <>
+                                                <Tooltip title="Update Payment">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            setSelectedFund(fund);
+                                                            setShowPaymentDialog(true);
+                                                        }}
+                                                        color="primary"
+                                                    >
+                                                        <PaymentIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Edit">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            setSelectedFund(fund);
+                                                            setShowEditDialog(true);
+                                                        }}
+                                                        color="info"
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                                <Tooltip title="Delete">
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            setSelectedFund(fund);
+                                                            setShowDeleteDialog(true);
+                                                        }}
+                                                        color="error"
+                                                    >
+                                                        <DeleteIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))

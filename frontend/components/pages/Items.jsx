@@ -19,7 +19,7 @@ import { getFinanceData, subscribeToFinanceData } from '../../services/financeSt
 import { useAuth } from '../../context/AuthContext';
 
 const Items = () => {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const userId = user?.id;
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -213,9 +213,11 @@ const Items = () => {
                         <Button variant="outlined" startIcon={<PictureAsPdfIcon />} onClick={handleExportPdf} sx={{ flex: { xs: 1, sm: 'initial' } }}>
                             Export PDF
                         </Button>
-                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowForm(true)} sx={{ flex: { xs: 1, sm: 'initial' } }}>
-                            Add New Item
-                        </Button>
+                        {isAdmin && (
+                            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setShowForm(true)} sx={{ flex: { xs: 1, sm: 'initial' } }}>
+                                Add New Item
+                            </Button>
+                        )}
                     </Box>
                 )}
             </Box>
@@ -233,6 +235,7 @@ const Items = () => {
                     loading={loading}
                     error={error}
                     budget={budget}
+                    isAdmin={isAdmin}
                     onEdit={handleEdit}
                     onDelete={handleDeleteItem}
                     onTogglePurchase={handleTogglePurchase}
@@ -256,7 +259,7 @@ const Items = () => {
             </Snackbar>
 
             {/* Floating Action Button for quick add */}
-            {!showForm && (
+            {!showForm && isAdmin && (
                 <Fab
                     color="primary"
                     sx={{

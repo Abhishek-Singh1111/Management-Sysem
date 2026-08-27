@@ -305,6 +305,53 @@ class AuthController {
         }
     }
 
+    // List users for super administrators
+    static async getUsers(req, res) {
+        try {
+            const users = await AuthModel.findAllUsers();
+            res.json({ success: true, data: users });
+        } catch (error) {
+            console.error('Get users error:', error);
+            res.status(500).json({ success: false, message: 'Failed to get users' });
+        }
+    }
+
+    // Promote members or demote administrators
+    static async updateUserRole(req, res) {
+        try {
+            const userId = Number(req.params.id);
+            const { role } = req.body;
+
+            if (!Number.isInteger(userId) || !['member', 'admin'].includes(role)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'A valid user ID and role (member or admin) are required'
+                });
+            }
+
+            if (userId === req.user.id) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'You cannot change your own role'
+                });
+            }
+
+            const updatedUser = await AuthModel.updateRole(userId, role);
+            if (!updatedUser) {
+                return res.status(404).json({ success: false, message: 'User not found' });
+            }
+
+            res.json({
+                success: true,
+                message: `User role updated to ${role}`,
+                data: updatedUser
+            });
+        } catch (error) {
+            console.error('Update user role error:', error);
+            res.status(500).json({ success: false, message: 'Failed to update user role' });
+        }
+    }
+
     // Update profile
     static async updateProfile(req, res) {
         try {

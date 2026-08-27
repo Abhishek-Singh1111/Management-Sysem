@@ -25,6 +25,7 @@ import Reports from '../components/pages/Reports';
 import Profile from '../components/pages/Profile';
 import Settings from '../components/pages/Settings';
 import NotFound from '../components/pages/NotFound';
+import UserManagement from '../components/pages/UserManagement';
 
 // Create theme
 const theme = createTheme({
@@ -72,9 +73,9 @@ function App() {
                             <Route path="/settings" element={<Settings />} />
                         </Route>
 
-                        {/* Admin Only Routes */}
-                        <Route element={<ProtectedRoute roles={['admin']}><Layout /></ProtectedRoute>}>
-                            <Route path="/admin/users" element={<div>User Management</div>} />
+                        {/* Super-admin Only Routes */}
+                        <Route element={<ProtectedRoute roles={['super_admin']}><Layout /></ProtectedRoute>}>
+                            <Route path="/admin/users" element={<UserManagement />} />
                             <Route path="/admin/settings" element={<div>Admin Settings</div>} />
                         </Route>
 
