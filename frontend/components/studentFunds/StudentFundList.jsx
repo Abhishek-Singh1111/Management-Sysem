@@ -31,6 +31,7 @@ import {
     Delete as DeleteIcon,
     Payment as PaymentIcon,
     PictureAsPdf as PdfIcon,
+    Search as SearchIcon,
 } from '@mui/icons-material';
 import { studentFundAPI, departmentAPI, branchAPI, semesterAPI } from '../../services/endpoints';
 import { useNotification } from '../../hooks/useNotification';
@@ -58,6 +59,13 @@ const StudentFundList = () => {
         payment_status: '',
         search: '',
     });
+    const [appliedFilters, setAppliedFilters] = useState({
+        semester_id: '',
+        department_id: '',
+        branch_id: '',
+        payment_status: '',
+        search: '',
+    });
     const [departments, setDepartments] = useState([]);
     const [branches, setBranches] = useState([]);
     const [semesters, setSemesters] = useState([]);
@@ -75,12 +83,12 @@ const StudentFundList = () => {
         try {
             const [response, summaryResponse] = await Promise.all([
                 studentFundAPI.getAll({
-                    ...filters,
+                    ...appliedFilters,
                 }),
                 studentFundAPI.getSummary({
-                    semester_id: filters.semester_id,
-                    department_id: filters.department_id,
-                    branch_id: filters.branch_id,
+                    semester_id: appliedFilters.semester_id,
+                    department_id: appliedFilters.department_id,
+                    branch_id: appliedFilters.branch_id,
                 }),
             ]);
             setFunds(response.data.data || []);
@@ -90,7 +98,7 @@ const StudentFundList = () => {
         } finally {
             setLoading(false);
         }
-    }, [filters, showNotification]);
+    }, [appliedFilters, showNotification]);
 
     const fetchFiltersData = useCallback(async () => {
         try {
@@ -127,11 +135,27 @@ const StudentFundList = () => {
     }, [fetchFiltersData]);
 
     const handleFilterChange = (field, value) => {
-        setFilters(prev => ({ ...prev, [field]: value }));
+        setFilters(prev => ({
+            ...prev,
+            [field]: value,
+            ...(field === 'department_id' ? { branch_id: '' } : {}),
+        }));
+
+        if (field !== 'search') {
+            setAppliedFilters(prev => ({
+                ...prev,
+                [field]: value,
+                ...(field === 'department_id' ? { branch_id: '' } : {}),
+            }));
+        }
+
         if (field === 'department_id') {
-            setFilters(prev => ({ ...prev, branch_id: '' }));
             fetchBranches(value);
         }
+    };
+
+    const handleSearch = () => {
+        setAppliedFilters(prev => ({ ...prev, search: filters.search }));
     };
 
     const handleDelete = async () => {
@@ -300,16 +324,34 @@ const StudentFundList = () => {
             {/* Filters */}
             <Paper sx={{ p: { xs: 1, sm: 2 }, mb: { xs: 2, sm: 3 } }}>
                 <Grid container spacing={{ xs: 1, sm: 2 }} alignItems="center">
+                    <Grid item xs={12}>
+                        <Typography variant="subtitle1" fontWeight="bold">
+                            Select Branch, Semester & Department
+                        </Typography>
+                    </Grid>
                     <Grid item xs={12} sm={3}>
                         <TextField
                             fullWidth
-                            label="Search"
+                            label="Search student"
                             variant="outlined"
                             size="small"
                             value={filters.search}
                             onChange={(e) => handleFilterChange('search', e.target.value)}
-                            placeholder="Name, ID, Email..."
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') handleSearch();
+                            }}
+                            placeholder="Name, email, or ID..."
                         />
+                    </Grid>
+                    <Grid item xs={12} sm={1}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            onClick={handleSearch}
+                            startIcon={<SearchIcon />}
+                        >
+                            Search
+                        </Button>
                     </Grid>
                     <Grid item xs={12} sm={2}>
                         <FormControl fullWidth size="small">

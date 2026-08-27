@@ -37,6 +37,13 @@ export const updateUserRole = (id, role) => api.patch(`/auth/users/${id}/role`, 
 // Add token to requests if available
 api.interceptors.request.use(
     (config) => {
+        if (config.data && typeof config.data.email === 'string') {
+            config.data = {
+                ...config.data,
+                email: config.data.email.toLowerCase(),
+            };
+        }
+
         const token = localStorage.getItem('accessToken')?.trim();
         if (token) {
             config.headers = config.headers || {};

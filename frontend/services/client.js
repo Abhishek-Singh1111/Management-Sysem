@@ -24,6 +24,13 @@ const apiClient = axios.create({
 // Request interceptor to add token
 apiClient.interceptors.request.use(
     (config) => {
+        if (config.data && typeof config.data.email === 'string') {
+            config.data = {
+                ...config.data,
+                email: config.data.email.toLowerCase(),
+            };
+        }
+
         const token = localStorage.getItem('accessToken');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
