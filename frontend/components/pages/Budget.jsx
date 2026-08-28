@@ -5,7 +5,7 @@ import { getFinanceData, saveFinanceData, subscribeToFinanceData } from '../../s
 import { useAuth } from '../../context/AuthContext';
 
 const Budget = () => {
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
     const userId = user?.id;
     const [finance, setFinance] = useState(() => getFinanceData(userId));
     const [itemsTotal, setItemsTotal] = useState(0);
@@ -26,7 +26,11 @@ const Budget = () => {
             }
         };
         loadItems();
-        return subscribeToFinanceData(() => setFinance(getFinanceData(userId)));
+        return subscribeToFinanceData(() => {
+            const updatedFinance = getFinanceData(userId);
+            setFinance(updatedFinance);
+            setBudgetInput(String(updatedFinance.budget || ''));
+        });
     }, [userId]);
 
     const handleSave = (event) => {
@@ -48,8 +52,14 @@ const Budget = () => {
             <Paper component="form" onSubmit={handleSave} sx={{ p: 3, maxWidth: 640 }}>
                 <Typography color="text.secondary" sx={{ mb: 3 }}>Set the maximum fund available for party purchases.</Typography>
                 {message && <Alert severity={message.includes('successfully') ? 'success' : 'error'} sx={{ mb: 2 }}>{message}</Alert>}
-                <TextField fullWidth required label="Party budget" type="number" inputProps={{ min: 0, step: 0.01 }} value={budgetInput} onChange={(event) => setBudgetInput(event.target.value)} InputProps={{ startAdornment: '₹' }} />
-                <Button type="submit" variant="contained" sx={{ mt: 3 }}>Save budget</Button>
+                {isAdmin ? (
+                    <>
+                        <TextField fullWidth required label="Party budget" type="number" inputProps={{ min: 0, step: 0.01 }} value={budgetInput} onChange={(event) => setBudgetInput(event.target.value)} InputProps={{ startAdornment: '₹' }} />
+                        <Button type="submit" variant="contained" sx={{ mt: 3 }}>Save budget</Button>
+                    </>
+                ) : (
+                    <Typography>Only an admin or super admin can change the budget.</Typography>
+                )}
             </Paper>
             <Paper sx={{ p: 3, mt: 3, maxWidth: 640 }}>
                 <Typography>Planned item cost: ₹{itemsTotal.toFixed(2)}</Typography>

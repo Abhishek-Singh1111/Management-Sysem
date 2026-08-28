@@ -43,7 +43,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Create new item
-router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+router.post('/', authenticateToken, authorizeRoles('admin', 'super_admin'), async (req, res) => {
     try {
         const { name, unit_price, quantity } = req.body;
         const price = Number(unit_price);
@@ -68,7 +68,7 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
 });
 
 // Update item
-router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+router.put('/:id', authenticateToken, authorizeRoles('admin', 'super_admin'), async (req, res) => {
     try {
         if (req.body.unit_price !== undefined && (!Number.isFinite(Number(req.body.unit_price)) || Number(req.body.unit_price) < 0)) {
             return res.status(400).json({ success: false, message: 'unit_price must be a number >= 0' });
@@ -87,7 +87,7 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
 });
 
 // Delete item
-router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+router.delete('/:id', authenticateToken, authorizeRoles('admin', 'super_admin'), async (req, res) => {
     try {
         const deletedItem = await ItemModel.deleteItem(req.params.id);
         if (!deletedItem) {

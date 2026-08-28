@@ -1,11 +1,12 @@
 const getStorageKey = (userId) => `party-finance-${userId || 'guest'}`;
+const budgetStorageKey = 'party-budget';
 
 export const getFinanceData = (userId) => {
     try {
         const stored = localStorage.getItem(getStorageKey(userId));
         const data = stored ? JSON.parse(stored) : {};
         return {
-            budget: Number(data.budget || 0),
+            budget: Number(localStorage.getItem(budgetStorageKey) || 0),
             income: Number(data.income || 0),
         };
     } catch {
@@ -18,7 +19,8 @@ export const saveFinanceData = (userId, data) => {
         budget: Math.max(0, Number(data.budget || 0)),
         income: Math.max(0, Number(data.income || 0)),
     };
-    localStorage.setItem(getStorageKey(userId), JSON.stringify(financeData));
+    localStorage.setItem(budgetStorageKey, String(financeData.budget));
+    localStorage.setItem(getStorageKey(userId), JSON.stringify({ income: financeData.income }));
     window.dispatchEvent(new CustomEvent('finance-data-updated'));
     return financeData;
 };

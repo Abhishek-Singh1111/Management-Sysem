@@ -20,12 +20,12 @@ router.get('/', StudentFundController.getAllStudentFunds);
 router.get('/student/:studentId', StudentFundController.getStudentFundByStudentId);
 router.get('/:id', StudentFundController.getStudentFundById);
 
-router.post('/', authorizeRoles('admin'), StudentFundController.createStudentFund);
-router.post('/bulk-import', authorizeRoles('admin'), StudentFundController.bulkImportStudents);
+router.post('/', authorizeRoles('admin', 'super_admin'), StudentFundController.createStudentFund);
+router.post('/bulk-import', authorizeRoles('admin', 'super_admin'), StudentFundController.bulkImportStudents);
 
-router.put('/:id', authorizeRoles('admin'), StudentFundController.updateStudentFund);
-router.put('/:id/payment', authorizeRoles('admin'), StudentFundController.updatePaymentStatus);
+router.put('/:id', authorizeRoles('admin', 'super_admin'), StudentFundController.updateStudentFund);
+router.put('/:id/payment', authorizeRoles('admin', 'super_admin'), StudentFundController.updatePaymentStatus);
 
-router.delete('/:id', authorizeRoles('admin'), StudentFundController.deleteStudentFund);
+router.delete('/:id', authorizeRoles('admin', 'super_admin'), StudentFundController.deleteStudentFund);
 
 module.exports = router;
